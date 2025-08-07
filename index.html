@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DICOM WL Demo</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background: #f0f0f0;
+    }
+
+    canvas {
+      width: 512px;
+      height: 512px;
+      border: 2px dashed #888;
+      margin-bottom: 1em;
+    }
+
+    .upload-btn {
+      background-color: #5ba2d9e0;
+      color: #121212;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(2px);
+      margin-bottom: 16px;
+    }
+
+    .upload-btn:hover {
+      background-color: #4991cae0;
+      transform: scale(1.05);
+    }
+
+    .upload-btn:active {
+      transform: scale(0.96);
+    }
+
+    #wl-label {
+      font-family: monospace;
+      font-weight: bold;
+      font-size: 16px;
+      display: block;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h2>WebAssembly DICOM Window/Level Demo</h2>
+  <button id="uploadBtn" class="upload-btn">Upload DICOM</button>
+  <input type="file" id="fileInput" style="display: none;" />
+  <canvas id="dicom-canvas" width="512" height="512"></canvas>
+  <label id="wl-label">Window: -, Level: -</label>
+  <p>Use mouse drag (horizontal = window, vertical = level)</p>
+  <script src="dicom_viewer.js"></script>
+  <script>
+    DicomModule({
+      canvas: document.getElementById("dicom-canvas"),
+      onRuntimeInitialized() {
+		console.log("WebAssembly DICOM viewer initialized");
+	  }
+	}).then(function(Module) {
+        const wasmModule = Module;
+		
+		
+        let defaultWindow = 256;
+        let defaultLevel = 128;
+        const canvas = document.getElementById("dicom-canvas");
+        const gl = canvas.getContext("webgl2");
+
+        if (!gl) {
+          console.error("WebGL2 not supported!");
+        } else {
+          console.log("WebGL2 context acquired");
+        }
+		
+		try {
+		if(canvas)
+			Module.InitViewer(); // this may fail if not bound or crashes
+		} catch (e) {
+			console.error("InitViewer threw error:", e);
+		}
+
+		
+        document.getElementById("uploadBtn").addEventListener("click", () => {
+          document.getElementById("fileInput").click();
+        });
+
+        document.getElementById("fileInput").addEventListener("change", async (e) => {
+          if (e.target.files.length > 0) {
+            const file = e.target.files[0];
+            const arrayBuffer = await file.arrayBuffer();
+            const byteArray = new Uint8Array(arrayBuffer);
+            const ptr = wasmModule._malloc(byteArray.length);
+            wasmModule.HEAPU8.set(byteArray, ptr);
+
+            try {
+              wasmModule.LoadDicom(ptr, byteArray.length);
+
+              setTimeout(() => {
+                defaultWindow = wasmModule.getWWidth();
+                defaultLevel = wasmModule.getWCenter();
+
+                document.getElementById("wl-label").innerText =
+                  `Window: ${defaultWindow}, Level: ${defaultLevel}`;
+              }, 200);
+            } catch (err) {
+              console.error("Error calling LoadDicom:", err);
+            }
+
+            wasmModule._free(ptr);
+			e.target.value = null;
+          }
+        });
+
+        // Mouse interaction
+        let isDragging = false;
+        let lastX = 0, lastY = 0;
+
+        canvas.addEventListener("mousedown", (e) => {
+          isDragging = true;
+          lastX = e.clientX;
+          lastY = e.clientY;
+        });
+
+        canvas.addEventListener("mousemove", (e) => {
+          if (!isDragging) return;
+          const dx = e.clientX - lastX;
+          const dy = e.clientY - lastY;
+          lastX = e.clientX;
+          lastY = e.clientY;
+
+          defaultWindow = Math.max(1, defaultWindow + dx * 2);
+          defaultLevel += dy;
+
+          if (wasmModule && wasmModule.SetWindowLevel) {
+            wasmModule.SetWindowLevel(defaultWindow, defaultLevel);
+            document.getElementById("wl-label").innerText =
+              `Window: ${defaultWindow}, Level: ${defaultLevel}`;
+          }
+        });
+
+        canvas.addEventListener("mouseup", () => isDragging = false);
+        canvas.addEventListener("mouseleave", () => isDragging = false);
+      });
+  </script>
+</body>
+</html>
