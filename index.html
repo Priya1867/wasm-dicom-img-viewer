@@ -53,13 +53,24 @@
       display: block;
       margin-top: 10px;
     }
+	.canvas-container {
+	  width: 100vw;
+	  height: 100vh;
+	  overflow: auto;
+	  display: flex;
+	  justify-content: center;  
+	  align-items: start;       
+	  background-color: #f5f5f5;
+	}
   </style>
 </head>
 <body>
   <h2>WebAssembly DICOM Window/Level Demo</h2>
   <button id="uploadBtn" class="upload-btn">Upload DICOM</button>
   <input type="file" id="fileInput" style="display: none;" />
-  <canvas id="dicom-canvas" width="512" height="512"></canvas>
+  <div class="canvas-container">
+	<canvas id="dicom-canvas" width="512" height="512"></canvas>
+  </div>
   <label id="wl-label">Window: -, Level: -</label>
   <p>Use mouse drag (horizontal = window, vertical = level)</p>
   <script src="dicom_viewer.js"></script>

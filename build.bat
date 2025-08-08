@@ -13,9 +13,9 @@ echo [1/2] Check for dcmlite dependency...
 
 REM === Check if libdcmlite.a already exists ===
 if exist %OUT_DIR%\libdcmlite.a (
-    echo [✓] libdcmlite.a already exists in %OUT_DIR%
+    echo libdcmlite.a already exists in %OUT_DIR%
 ) else (
-    echo [✗] libdcmlite.a is missing in %OUT_DIR%
+    echo libdcmlite.a is missing in %OUT_DIR%
     exit /b 1
 )
 
