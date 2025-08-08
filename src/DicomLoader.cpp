@@ -58,16 +58,30 @@ bool DicomLoader::loadFromBuffer(uintptr_t ptr, int len, DicomRenderer& renderer
         renderer.width = w;
         renderer.height = h;
 		
+		int outW, outH;
+		
+		int targetW =512,targetH=512;
+		
+		float srcAspect = static_cast<float>(w) / h;
+		float dstAspect = static_cast<float>(512) / 512;
+	
+		if (srcAspect > dstAspect) {
+			outW = targetW;
+			outH = static_cast<int>(targetW / srcAspect);
+		} else {
+			outH = targetH;
+			outW = static_cast<int>(targetH * srcAspect);
+		}
+		
 		EM_ASM({
 			var canvas = document.getElementById("dicom-canvas");
 			canvas.width = $0;
 			canvas.height = $1;
 			canvas.style.width = $0 + "px";
 			canvas.style.height = $1 + "px";
-		}, w, h);
+		}, outW, outH);
 
-		
-        glViewport(0, 0, w, h);
+		glViewport(0, 0, outW, outH);
 
         dcmcore::Buffer pixBuf;
         std::size_t length;
