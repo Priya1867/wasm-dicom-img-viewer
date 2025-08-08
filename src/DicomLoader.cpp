@@ -27,6 +27,7 @@ bool DicomLoader::loadFromBuffer(uintptr_t ptr, int len, DicomRenderer& renderer
                .AddTag({0x0028, 0x1050})
                .AddTag({0x0028, 0x1051})
                .AddTag({0x0028, 0x1052})
+			   .AddTag({0x0028, 0x0004})
                .AddTag({0x0028, 0x1053});
 
         dcmcore::BinaryFile file;
@@ -39,6 +40,8 @@ bool DicomLoader::loadFromBuffer(uintptr_t ptr, int len, DicomRenderer& renderer
         if (std::string intercept_str; ds.GetString({0x0028, 0x1052}, intercept_str)) renderer.intercept = std::stof(intercept_str);
         if (std::string wl_str; ds.GetString({0x0028, 0x1050}, wl_str)) renderer.setWindowLevel(renderer.getWindow(), extractWindowValue(wl_str));
         if (std::string ww_str; ds.GetString({0x0028, 0x1051}, ww_str)) renderer.setWindowLevel(extractWindowValue(ww_str), renderer.getLevel());
+		if (std::string photometric_interpretation; ds.GetString({0x0028, 0x0004}, photometric_interpretation)) renderer.isMono1 = (		 photometric_interpretation == "MONOCHROME1" ? true :false);
+
 
 		
 		EM_ASM({console.log("Slope: " , $0);}, renderer.slope);

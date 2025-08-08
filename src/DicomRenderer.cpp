@@ -24,5 +24,6 @@ void DicomRenderer::render() {
     glUniform1f(graphics->getUniformLocation("uLevel"), static_cast<float>(level));
     glUniform1f(graphics->getUniformLocation("uSlope"), slope);
     glUniform1f(graphics->getUniformLocation("uIntercept"), intercept);
+	glUniform1i(graphics->getUniformLocation("uPhotometric"), isMono1 ? 1 : 0);
     graphics->draw();
 }

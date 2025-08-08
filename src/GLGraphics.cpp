@@ -24,12 +24,17 @@ const char* fragmentSrc =
     "uniform float uLevel;\n"
     "uniform float uSlope;\n"
     "uniform float uIntercept;\n"
+	"uniform int uPhotometric; // 0 = MONOCHROME2, 1 = MONOCHROME1\n"
     "out vec4 fragColor;\n"
     "void main() {\n"
     "    uint raw = texture(uTexture, vTexCoord).r;\n"
     "    float intensity = float(raw) * uSlope + uIntercept;\n"
     "    float val = (intensity - (uLevel - 0.5)) / max(uWindow, 1.0) + 0.5;\n"
     "    val = clamp(val, 0.0, 1.0);\n"
+	"// Invert intensity for MONOCHROME1\n"
+    "if (uPhotometric == 1) {\n"
+    "    val = 1.0 - val;\n"
+    "}\n"
     "    fragColor = vec4(val, val, val, 1.0);\n"
     "}\n";
 }

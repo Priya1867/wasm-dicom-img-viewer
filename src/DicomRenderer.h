@@ -19,6 +19,7 @@ public:
     int height = 512;
     float slope = 1.0f;
     float intercept = 0.0f;
+	bool isMono1 =false;
 
 private:
     int window = 4096;
